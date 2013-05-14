@@ -4,9 +4,8 @@ require 'recaptcha'
 require 'net/http'
 require 'recaptcha/rails'
 require 'redmine'
-require 'dispatcher'
 
-Dispatcher.to_prepare :redmine_recaptcha do
+to_prepare = Proc.new do
   require_dependency 'recaptcha/client_helper'
   require_dependency 'client_helper_patch'
   Recaptcha::ClientHelper.send(:include, ClientHelperPatch) 
@@ -18,6 +17,16 @@ Dispatcher.to_prepare :redmine_recaptcha do
   require_dependency 'issues_controller_patch'
   IssuesController.send(:include, IssuesControllerPatch) 
 end
+
+
+if Redmine::VERSION::MAJOR >= 2
+  Rails.configuration.to_prepare(&to_prepare)
+else
+  require 'dispatcher'
+  Dispatcher.to_prepare(:redmine_recaptcha, &to_prepare)
+end
+
+
 
 Redmine::Plugin.register :redmine_recaptcha do
   name 'reCAPTCHA for user self registration'

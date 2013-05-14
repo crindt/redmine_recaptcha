@@ -1,4 +1,8 @@
+# per http://projects.andriylesyuk.com/projects/base/wiki/Porting-to-Redmine-2
+require_dependency File.expand_path(File.join(File.dirname(__FILE__), '../../../app/models/issue_observer'))
+
 module IssuesControllerPatch
+
   def self.included(base)
     base.send(:include, InstanceMethods)
 
@@ -11,7 +15,7 @@ module IssuesControllerPatch
   module InstanceMethods
     def create_with_recaptcha_verification
       call_hook(:controller_issues_new_before_save, { :params => params, :issue => @issue })
-      IssueObserver.instance.send_notification = params[:send_notification] == '0' ? false : true
+      #IssueObserver.instance.send_notification = params[:send_notification] == '0' ? false : true
       if (User.current.logged? || verify_recaptcha( :private_key => Setting.plugin_redmine_recaptcha['recaptcha_private_key'], :model => @user, :message => "There was an error with the recaptcha code below. Please re-enter the code and click submit." )) && @issue.save
         attachments = Attachment.attach_files(@issue, params[:attachments])
         render_attachment_warning_if_needed(@issue)
@@ -38,7 +42,7 @@ module IssuesControllerPatch
 
     def update_with_recaptcha_verification
       update_issue_from_params
-      JournalObserver.instance.send_notification = params[:send_notification] == '0' ? false : true
+      #JournalObserver.instance.send_notification = params[:send_notification] == '0' ? false : true
       if (User.current.logged? || verify_recaptcha( :private_key => Setting.plugin_redmine_recaptcha['recaptcha_private_key'], :model => @user, :message => "There was an error with the recaptcha code below. Please re-enter the code and click submit." )) && @issue.save_issue_with_child_records(params, @time_entry)
         render_attachment_warning_if_needed(@issue)
         flash[:notice] = l(:notice_successful_update) unless @issue.current_journal == @journal
